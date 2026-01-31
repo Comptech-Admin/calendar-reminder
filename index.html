@@ -7,37 +7,62 @@
 
 <style>
   body {
-    font-family: system-ui, sans-serif;
+    font-family: system-ui, -apple-system, sans-serif;
     max-width: 600px;
     margin: auto;
     padding: 20px;
   }
+
   h2 {
     text-align: center;
   }
+
   label {
     display: block;
     margin-top: 12px;
     font-weight: 600;
   }
+
   input, textarea, button {
     width: 100%;
     padding: 10px;
     margin-top: 6px;
     font-size: 16px;
+    box-sizing: border-box;
   }
+
+  textarea {
+    resize: vertical;
+  }
+
   .buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     margin-top: 20px;
   }
+
   .full {
     grid-column: 1 / -1;
   }
+
   #qrcode {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 25px;
+  }
+
+  #qrcode img {
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.6;
   }
 </style>
 </head>
@@ -69,33 +94,40 @@
 </label>
 
 <label>Reminder (minutes before)
-<input type="number" id="reminder" value="15">
+<input type="number" id="reminder" value="15" min="0">
 </label>
 
 <div class="buttons">
   <button class="full" type="submit">📥 Download (.ICS)</button>
   <button type="button" onclick="openGoogle()">📅 Google</button>
   <button type="button" onclick="downloadICS()">🍎 Apple / Outlook</button>
-  <button class="full" type="button" onclick="makeQR()">🔳 Generate QR Code</button>
+  <button type="button" onclick="makeQR()">🔳 Generate QR</button>
+  <button type="button" onclick="downloadQR()">⬇️ Download QR</button>
+  <button class="full" type="button" onclick="shareEvent()">📤 Share Event</button>
 </div>
 
 </form>
 
 <div id="qrcode"></div>
 
+<footer>
+  Free static calendar generator
+</footer>
+
 <script>
+
 function formatICS(date) {
   return new Date(date).toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
 }
 
 function getEventData() {
   return {
-    title: title.value,
-    start: formatICS(start.value),
-    end: formatICS(end.value),
-    location: location.value,
-    description: description.value,
-    reminder: reminder.value
+    title: document.getElementById("title").value,
+    start: formatICS(document.getElementById("start").value),
+    end: formatICS(document.getElementById("end").value),
+    location: document.getElementById("location").value,
+    description: document.getElementById("description").value,
+    reminder: document.getElementById("reminder").value
   };
 }
 
@@ -140,20 +172,66 @@ function openGoogle() {
   window.open(url, "_blank");
 }
 
+let currentQRUrl = "";
+
 function makeQR() {
   const e = getEventData();
   const googleURL = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
     `&text=${encodeURIComponent(e.title)}` +
-    `&dates=${e.start}/${e.end}`;
+    `&dates=${e.start}/${e.end}` +
+    `&details=${encodeURIComponent(e.description)}` +
+    `&location=${encodeURIComponent(e.location)}`;
+
+  currentQRUrl = googleURL;
+
+  const qrImageURL =
+    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(googleURL)}`;
 
   document.getElementById("qrcode").innerHTML =
-    `<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(googleURL)}">`;
+    `<img id="qrImage" src="${qrImageURL}" width="220">`;
 }
 
-document.getElementById("eventForm").addEventListener("submit", e => {
+function downloadQR() {
+  const img = document.getElementById("qrImage");
+  if (!img) {
+    alert("Generate QR first.");
+    return;
+  }
+
+  const link = document.createElement("a");
+  link.href = img.src;
+  link.download = "event-qr.png";
+  link.click();
+}
+
+async function shareEvent() {
+  const e = getEventData();
+  const shareURL = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+    `&text=${encodeURIComponent(e.title)}` +
+    `&dates=${e.start}/${e.end}` +
+    `&details=${encodeURIComponent(e.description)}` +
+    `&location=${encodeURIComponent(e.location)}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: e.title,
+        text: "Add this event to your calendar:",
+        url: shareURL
+      });
+    } catch (err) {
+      console.log("Share cancelled");
+    }
+  } else {
+    alert("Sharing not supported on this device.");
+  }
+}
+
+document.getElementById("eventForm").addEventListener("submit", function(e) {
   e.preventDefault();
   downloadICS();
 });
+
 </script>
 
 </body>
