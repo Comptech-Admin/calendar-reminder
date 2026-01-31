@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar Reminder Generator</title>
+
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+  }
+  h2 {
+    text-align: center;
+  }
+  label {
+    display: block;
+    margin-top: 12px;
+    font-weight: 600;
+  }
+  input, textarea, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    font-size: 16px;
+  }
+  .buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .full {
+    grid-column: 1 / -1;
+  }
+  #qrcode {
+    text-align: center;
+    margin-top: 20px;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>📅 Calendar Reminder</h2>
+
+<form id="eventForm">
+
+<label>Event Title
+<input id="title" required>
+</label>
+
+<label>Start
+<input type="datetime-local" id="start" required>
+</label>
+
+<label>End
+<input type="datetime-local" id="end" required>
+</label>
+
+<label>Location
+<input id="location">
+</label>
+
+<label>Description
+<textarea id="description"></textarea>
+</label>
+
+<label>Reminder (minutes before)
+<input type="number" id="reminder" value="15">
+</label>
+
+<div class="buttons">
+  <button class="full" type="submit">📥 Download (.ICS)</button>
+  <button type="button" onclick="openGoogle()">📅 Google</button>
+  <button type="button" onclick="downloadICS()">🍎 Apple / Outlook</button>
+  <button class="full" type="button" onclick="makeQR()">🔳 Generate QR Code</button>
+</div>
+
+</form>
+
+<div id="qrcode"></div>
+
+<script>
+function formatICS(date) {
+  return new Date(date).toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
+}
+
+function getEventData() {
+  return {
+    title: title.value,
+    start: formatICS(start.value),
+    end: formatICS(end.value),
+    location: location.value,
+    description: description.value,
+    reminder: reminder.value
+  };
+}
+
+function buildICS(e) {
+  return `BEGIN:VCALENDAR
+VERSION:2.0
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:${Date.now()}@calendar
+DTSTAMP:${formatICS(new Date())}
+DTSTART:${e.start}
+DTEND:${e.end}
+SUMMARY:${e.title}
+DESCRIPTION:${e.description}
+LOCATION:${e.location}
+BEGIN:VALARM
+TRIGGER:-PT${e.reminder}M
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+}
+
+function downloadICS() {
+  const e = getEventData();
+  const blob = new Blob([buildICS(e)], { type: "text/calendar" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${e.title.replace(/\s+/g,"_")}.ics`;
+  a.click();
+}
+
+function openGoogle() {
+  const e = getEventData();
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+    `&text=${encodeURIComponent(e.title)}` +
+    `&dates=${e.start}/${e.end}` +
+    `&details=${encodeURIComponent(e.description)}` +
+    `&location=${encodeURIComponent(e.location)}`;
+
+  window.open(url, "_blank");
+}
+
+function makeQR() {
+  const e = getEventData();
+  const googleURL = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+    `&text=${encodeURIComponent(e.title)}` +
+    `&dates=${e.start}/${e.end}`;
+
+  document.getElementById("qrcode").innerHTML =
+    `<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(googleURL)}">`;
+}
+
+document.getElementById("eventForm").addEventListener("submit", e => {
+  e.preventDefault();
+  downloadICS();
+});
+</script>
+
+</body>
+</html>
