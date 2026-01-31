@@ -3,73 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Calendar Reminder Generator</title>
+<title>Calendar Generator</title>
 
 <style>
-  body {
-    font-family: system-ui, -apple-system, sans-serif;
-    max-width: 600px;
-    margin: auto;
-    padding: 20px;
-  }
+:root {
+  --bg: #121212;
+  --card: #1e1e1e;
+  --text: #eaeaea;
+  --accent: #4da3ff;
+  --border: #333;
+}
 
-  h2 {
-    text-align: center;
-  }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+  max-width: 650px;
+  margin: auto;
+  padding: 20px;
+}
 
-  label {
-    display: block;
-    margin-top: 12px;
-    font-weight: 600;
-  }
+h2 {
+  text-align: center;
+}
 
-  input, textarea, button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 6px;
-    font-size: 16px;
-    box-sizing: border-box;
-  }
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 600;
+}
 
-  textarea {
-    resize: vertical;
-  }
+input, textarea, select, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  font-size: 16px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
 
-  .buttons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 20px;
-  }
+button {
+  cursor: pointer;
+  background: var(--accent);
+  border: none;
+}
 
-  .full {
-    grid-column: 1 / -1;
-  }
+button:hover {
+  opacity: 0.9;
+}
 
-  #qrcode {
-    text-align: center;
-    margin-top: 25px;
-  }
+.buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
 
-  #qrcode img {
-    margin-top: 10px;
-    border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 8px;
-  }
+.full {
+  grid-column: 1 / -1;
+}
 
-  footer {
-    margin-top: 40px;
-    text-align: center;
-    font-size: 13px;
-    opacity: 0.6;
-  }
+#qrcode {
+  margin-top: 25px;
+  text-align: center;
+}
+
+canvas {
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>📅 Calendar Reminder</h2>
+<h2>📅 Advanced Calendar Generator</h2>
 
 <form id="eventForm">
 
@@ -85,6 +97,25 @@
 <input type="datetime-local" id="end" required>
 </label>
 
+<label>Time Zone
+<select id="timezone">
+<option value="UTC">UTC</option>
+<option value="America/New_York">Eastern</option>
+<option value="America/Chicago">Central</option>
+<option value="America/Denver">Mountain</option>
+<option value="America/Los_Angeles">Pacific</option>
+</select>
+</label>
+
+<label>Recurring
+<select id="recurring">
+<option value="">None</option>
+<option value="FREQ=DAILY">Daily</option>
+<option value="FREQ=WEEKLY">Weekly</option>
+<option value="FREQ=MONTHLY">Monthly</option>
+</select>
+</label>
+
 <label>Location
 <input id="location">
 </label>
@@ -94,40 +125,39 @@
 </label>
 
 <label>Reminder (minutes before)
-<input type="number" id="reminder" value="15" min="0">
+<input type="number" id="reminder" value="15">
 </label>
 
 <div class="buttons">
-  <button class="full" type="submit">📥 Download (.ICS)</button>
-  <button type="button" onclick="openGoogle()">📅 Google</button>
-  <button type="button" onclick="downloadICS()">🍎 Apple / Outlook</button>
-  <button type="button" onclick="makeQR()">🔳 Generate QR</button>
-  <button type="button" onclick="downloadQR()">⬇️ Download QR</button>
-  <button class="full" type="button" onclick="shareEvent()">📤 Share Event</button>
+<button class="full" type="submit">📥 Download (.ICS)</button>
+<button type="button" onclick="openGoogle()">📅 Google</button>
+<button type="button" onclick="generateQR()">🔳 Generate QR</button>
+<button type="button" onclick="downloadQR()">⬇️ Download QR</button>
+<button class="full" type="button" onclick="shareEvent()">📤 Share</button>
 </div>
 
 </form>
 
 <div id="qrcode"></div>
 
-<footer>
-  Free static calendar generator
-</footer>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <script>
 
-function formatICS(date) {
-  return new Date(date).toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
+function formatLocal(dateStr) {
+  return dateStr.replace(/[-:]/g, "").replace(".000", "");
 }
 
 function getEventData() {
   return {
-    title: document.getElementById("title").value,
-    start: formatICS(document.getElementById("start").value),
-    end: formatICS(document.getElementById("end").value),
-    location: document.getElementById("location").value,
-    description: document.getElementById("description").value,
-    reminder: document.getElementById("reminder").value
+    title: title.value,
+    start: formatLocal(start.value),
+    end: formatLocal(end.value),
+    location: location.value,
+    description: description.value,
+    reminder: reminder.value,
+    recurring: recurring.value,
+    timezone: timezone.value
   };
 }
 
@@ -137,12 +167,13 @@ VERSION:2.0
 CALSCALE:GREGORIAN
 BEGIN:VEVENT
 UID:${Date.now()}@calendar
-DTSTAMP:${formatICS(new Date())}
-DTSTART:${e.start}
-DTEND:${e.end}
+DTSTAMP:${formatLocal(new Date().toISOString())}
+DTSTART;TZID=${e.timezone}:${e.start}
+DTEND;TZID=${e.timezone}:${e.end}
 SUMMARY:${e.title}
 DESCRIPTION:${e.description}
 LOCATION:${e.location}
+${e.recurring ? "RRULE:" + e.recurring : ""}
 BEGIN:VALARM
 TRIGGER:-PT${e.reminder}M
 ACTION:DISPLAY
@@ -163,71 +194,66 @@ function downloadICS() {
 
 function openGoogle() {
   const e = getEventData();
-  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-    `&text=${encodeURIComponent(e.title)}` +
-    `&dates=${e.start}/${e.end}` +
-    `&details=${encodeURIComponent(e.description)}` +
-    `&location=${encodeURIComponent(e.location)}`;
+  const startUTC = new Date(start.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  const endUTC = new Date(end.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
 
-  window.open(url, "_blank");
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+  `&text=${encodeURIComponent(e.title)}` +
+  `&dates=${startUTC}/${endUTC}` +
+  `&details=${encodeURIComponent(e.description)}` +
+  `&location=${encodeURIComponent(e.location)}`;
+
+  window.open(url,"_blank");
 }
 
-let currentQRUrl = "";
+let currentQRData = "";
 
-function makeQR() {
+function generateQR() {
   const e = getEventData();
+  const startUTC = new Date(start.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  const endUTC = new Date(end.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+
   const googleURL = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-    `&text=${encodeURIComponent(e.title)}` +
-    `&dates=${e.start}/${e.end}` +
-    `&details=${encodeURIComponent(e.description)}` +
-    `&location=${encodeURIComponent(e.location)}`;
+  `&text=${encodeURIComponent(e.title)}` +
+  `&dates=${startUTC}/${endUTC}`;
 
-  currentQRUrl = googleURL;
+  currentQRData = googleURL;
 
-  const qrImageURL =
-    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(googleURL)}`;
+  document.getElementById("qrcode").innerHTML = "<canvas id='qr'></canvas>";
 
-  document.getElementById("qrcode").innerHTML =
-    `<img id="qrImage" src="${qrImageURL}" width="220">`;
+  QRCode.toCanvas(document.getElementById("qr"), googleURL, { width: 220 });
 }
 
 function downloadQR() {
-  const img = document.getElementById("qrImage");
-  if (!img) {
-    alert("Generate QR first.");
-    return;
-  }
-
+  const canvas = document.getElementById("qr");
+  if (!canvas) return alert("Generate QR first.");
   const link = document.createElement("a");
-  link.href = img.src;
   link.download = "event-qr.png";
+  link.href = canvas.toDataURL();
   link.click();
 }
 
 async function shareEvent() {
   const e = getEventData();
+  const startUTC = new Date(start.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  const endUTC = new Date(end.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+
   const shareURL = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-    `&text=${encodeURIComponent(e.title)}` +
-    `&dates=${e.start}/${e.end}` +
-    `&details=${encodeURIComponent(e.description)}` +
-    `&location=${encodeURIComponent(e.location)}`;
+  `&text=${encodeURIComponent(e.title)}` +
+  `&dates=${startUTC}/${endUTC}`;
 
   if (navigator.share) {
-    try {
-      await navigator.share({
-        title: e.title,
-        text: "Add this event to your calendar:",
-        url: shareURL
-      });
-    } catch (err) {
-      console.log("Share cancelled");
-    }
+    await navigator.share({
+      title: e.title,
+      text: "Add this event:",
+      url: shareURL
+    });
   } else {
-    alert("Sharing not supported on this device.");
+    alert("Sharing not supported.");
   }
 }
 
-document.getElementById("eventForm").addEventListener("submit", function(e) {
+document.getElementById("eventForm").addEventListener("submit", function(e){
   e.preventDefault();
   downloadICS();
 });
