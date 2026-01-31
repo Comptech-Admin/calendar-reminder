@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Calendar Generator</title>
+<title>Advanced Calendar Generator</title>
 
 <style>
 :root {
@@ -25,11 +25,12 @@ body {
 
 h2 {
   text-align: center;
+  margin-bottom: 20px;
 }
 
 label {
   display: block;
-  margin-top: 12px;
+  margin-top: 14px;
   font-weight: 600;
 }
 
@@ -45,29 +46,39 @@ input, textarea, select, button {
   box-sizing: border-box;
 }
 
+textarea {
+  resize: vertical;
+}
+
 button {
   cursor: pointer;
   background: var(--accent);
   border: none;
+  font-weight: 600;
+  transition: transform 0.05s ease, opacity 0.2s ease;
 }
 
 button:hover {
   opacity: 0.9;
 }
 
+button:active {
+  transform: scale(0.98);
+}
+
 .buttons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 25px;
 }
 
 .full {
-  grid-column: 1 / -1;
+  grid-column: span 2;
 }
 
 #qrcode {
-  margin-top: 25px;
+  margin-top: 30px;
   text-align: center;
 }
 
@@ -75,6 +86,13 @@ canvas {
   background: white;
   padding: 10px;
   border-radius: 8px;
+}
+
+footer {
+  margin-top: 40px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.5;
 }
 </style>
 </head>
@@ -125,21 +143,42 @@ canvas {
 </label>
 
 <label>Reminder (minutes before)
-<input type="number" id="reminder" value="15">
+<input type="number" id="reminder" value="15" min="0">
 </label>
 
 <div class="buttons">
-<button class="full" type="submit">📥 Download (.ICS)</button>
-<button type="button" onclick="openGoogle()">📅 Google</button>
-<button type="button" onclick="generateQR()">🔳 Generate QR</button>
-<button type="button" onclick="downloadQR()">⬇️ Download QR</button>
-<button class="full" type="button" onclick="shareEvent()">📤 Share</button>
+
+  <button class="full" type="submit">
+    📥 Download (.ICS)
+  </button>
+
+  <button type="button" onclick="openGoogle()">
+    📅 Google
+  </button>
+
+  <button type="button" onclick="generateQR()">
+    🔳 Generate QR
+  </button>
+
+  <button type="button" onclick="downloadQR()">
+    ⬇️ Download QR
+  </button>
+
+  <button type="button" onclick="shareEvent()">
+    📤 Share
+  </button>
+
 </div>
 
 </form>
 
 <div id="qrcode"></div>
 
+<footer>
+  Free static calendar generator
+</footer>
+
+<!-- QR Library (offline capable after first load) -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <script>
@@ -193,34 +232,27 @@ function downloadICS() {
 }
 
 function openGoogle() {
-  const e = getEventData();
   const startUTC = new Date(start.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
   const endUTC = new Date(end.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
 
   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-  `&text=${encodeURIComponent(e.title)}` +
+  `&text=${encodeURIComponent(title.value)}` +
   `&dates=${startUTC}/${endUTC}` +
-  `&details=${encodeURIComponent(e.description)}` +
-  `&location=${encodeURIComponent(e.location)}`;
+  `&details=${encodeURIComponent(description.value)}` +
+  `&location=${encodeURIComponent(location.value)}`;
 
   window.open(url,"_blank");
 }
 
-let currentQRData = "";
-
 function generateQR() {
-  const e = getEventData();
   const startUTC = new Date(start.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
   const endUTC = new Date(end.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
 
   const googleURL = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-  `&text=${encodeURIComponent(e.title)}` +
+  `&text=${encodeURIComponent(title.value)}` +
   `&dates=${startUTC}/${endUTC}`;
 
-  currentQRData = googleURL;
-
   document.getElementById("qrcode").innerHTML = "<canvas id='qr'></canvas>";
-
   QRCode.toCanvas(document.getElementById("qr"), googleURL, { width: 220 });
 }
 
@@ -234,22 +266,21 @@ function downloadQR() {
 }
 
 async function shareEvent() {
-  const e = getEventData();
   const startUTC = new Date(start.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
   const endUTC = new Date(end.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
 
   const shareURL = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-  `&text=${encodeURIComponent(e.title)}` +
+  `&text=${encodeURIComponent(title.value)}` +
   `&dates=${startUTC}/${endUTC}`;
 
   if (navigator.share) {
     await navigator.share({
-      title: e.title,
+      title: title.value,
       text: "Add this event:",
       url: shareURL
     });
   } else {
-    alert("Sharing not supported.");
+    alert("Sharing not supported on this device.");
   }
 }
 
