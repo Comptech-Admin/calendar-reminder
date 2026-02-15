@@ -1,15 +1,17 @@
 {
-  "name": "Advanced Calendar App",
-  "short_name": "Calendar",
+  "name": "EventPulse Calendar Generator",
+  "short_name": "EventPulse",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#4da3ff",
+  "background_color": "#0b1020",
+  "theme_color": "#5b6cff",
+  "description": "Generate calendar invites, QR codes, and share links.",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/747/747310.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }

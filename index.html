@@ -1,295 +1,570 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Advanced Calendar Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EventPulse | Smart Calendar Invite & QR Generator</title>
+  <meta name="description" content="Create polished calendar invites with reminders, QR codes, and one-click Google Calendar links. Mobile friendly and privacy-conscious." />
+  <meta name="keywords" content="calendar invite generator, ICS generator, QR calendar code, event scheduling" />
+  <meta name="author" content="EventPulse" />
+  <meta name="theme-color" content="#5b6cff" />
+  <meta property="og:title" content="EventPulse | Smart Calendar Invite & QR Generator" />
+  <meta property="og:description" content="Generate secure, shareable calendar invites with QR codes in seconds." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/assets/social-preview.svg" />
+  <meta property="og:url" content="https://eventpulse.example.com/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="EventPulse | Smart Calendar Invite & QR Generator" />
+  <meta name="twitter:description" content="Generate secure, shareable calendar invites with QR codes in seconds." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://eventpulse.example.com/" />
+  <link rel="manifest" href="manifest.json" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
 
-<style>
-:root {
-  --bg: #121212;
-  --card: #1e1e1e;
-  --text: #eaeaea;
-  --accent: #4da3ff;
-  --border: #333;
-}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "EventPulse",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "Build event invites and share by ICS, Google Calendar URL, and QR code.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+  </script>
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, sans-serif;
-  max-width: 650px;
-  margin: auto;
-  padding: 20px;
-}
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-soft: #121936;
+      --card: #192245;
+      --text: #ecf0ff;
+      --muted: #aeb7d8;
+      --border: #2c3767;
+      --primary: #5b6cff;
+      --primary-2: #7a8aff;
+      --good: #2ed0a8;
+      --danger: #ff6b7a;
+      --shadow: 0 20px 40px rgba(7, 11, 30, 0.45);
+      --radius: 16px;
+    }
 
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-}
+    * { box-sizing: border-box; }
 
-label {
-  display: block;
-  margin-top: 14px;
-  font-weight: 600;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(91, 108, 255, 0.35), transparent 38%),
+        radial-gradient(circle at 95% 10%, rgba(46, 208, 168, 0.18), transparent 45%),
+        var(--bg);
+    }
 
-input, textarea, select, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 6px;
-  font-size: 16px;
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  box-sizing: border-box;
-}
+    .container {
+      width: min(950px, 100% - 2rem);
+      margin: 2rem auto;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 1rem;
+    }
 
-textarea {
-  resize: vertical;
-}
+    .panel {
+      background: linear-gradient(165deg, rgba(255,255,255,0.03), transparent), var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+    }
 
-button {
-  cursor: pointer;
-  background: var(--accent);
-  border: none;
-  font-weight: 600;
-  transition: transform 0.05s ease, opacity 0.2s ease;
-}
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+      letter-spacing: -0.02em;
+    }
 
-button:hover {
-  opacity: 0.9;
-}
+    .sub {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      line-height: 1.4;
+      font-size: 0.95rem;
+    }
 
-button:active {
-  transform: scale(0.98);
-}
+    form {
+      display: grid;
+      gap: 0.8rem;
+    }
 
-.buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 25px;
-}
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.8rem;
+    }
 
-.full {
-  grid-column: span 2;
-}
+    label {
+      display: grid;
+      gap: 0.35rem;
+      font-size: 0.87rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
 
-#qrcode {
-  margin-top: 30px;
-  text-align: center;
-}
+    input, textarea, select, button {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--text);
+      padding: 0.75rem 0.85rem;
+      font-size: 0.98rem;
+      outline: none;
+      transition: border-color 0.2s ease, transform 0.07s ease, box-shadow 0.2s ease;
+    }
 
-canvas {
-  background: white;
-  padding: 10px;
-  border-radius: 8px;
-}
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--primary-2);
+      box-shadow: 0 0 0 4px rgba(122, 138, 255, 0.16);
+    }
 
-footer {
-  margin-top: 40px;
-  text-align: center;
-  font-size: 13px;
-  opacity: 0.5;
-}
-</style>
+    textarea { min-height: 88px; resize: vertical; }
+
+    .actions {
+      margin-top: 0.2rem;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      background: linear-gradient(160deg, var(--primary-2), var(--primary));
+      border: none;
+    }
+
+    .btn-accent {
+      background: linear-gradient(145deg, #31d6b0, #20b893);
+      border: none;
+      color: #072317;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .preview-head {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .card {
+      margin-top: 0.7rem;
+      padding: 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(9, 14, 35, 0.45);
+    }
+
+    .preview-title {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    .meta {
+      margin-top: 0.6rem;
+      color: var(--muted);
+      display: grid;
+      gap: 0.35rem;
+      font-size: 0.9rem;
+    }
+
+    #qrcode {
+      margin-top: 0.9rem;
+      text-align: center;
+      min-height: 1px;
+    }
+
+    #qrcode canvas {
+      max-width: 100%;
+      background: #fff;
+      border-radius: 14px;
+      border: 10px solid #fff;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    #status {
+      min-height: 1.1em;
+      margin-top: 0.65rem;
+      font-size: 0.88rem;
+      color: var(--good);
+    }
+
+    #status.error { color: var(--danger); }
+
+    .chip {
+      margin-top: 0.8rem;
+      display: inline-block;
+      padding: 0.35rem 0.58rem;
+      border-radius: 999px;
+      background: rgba(122, 138, 255, 0.15);
+      border: 1px solid rgba(122, 138, 255, 0.35);
+      color: #d0d7ff;
+      font-size: 0.79rem;
+    }
+
+    footer {
+      text-align: center;
+      padding-bottom: 1.4rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 860px) {
+      .container { grid-template-columns: 1fr; margin-top: 1rem; }
+    }
+
+    @media (max-width: 540px) {
+      .container { width: min(100% - 1rem, 100%); }
+      .panel { padding: 0.95rem; border-radius: 14px; }
+      .grid-2, .actions { grid-template-columns: 1fr; }
+      input, textarea, select, button { font-size: 16px; }
+    }
+  </style>
 </head>
-
 <body>
+  <main class="container" aria-label="Event invite generator">
+    <section class="panel">
+      <h1>📅 EventPulse</h1>
+      <p class="sub">Generate secure calendar invites with one-click sharing, QR codes, and automatic end-time defaults.</p>
 
-<h2>📅 Advanced Calendar Generator</h2>
+      <form id="eventForm" novalidate>
+        <label for="title">Event title
+          <input id="title" maxlength="120" required placeholder="Quarterly Planning Sync" />
+        </label>
 
-<form id="eventForm">
+        <div class="grid-2">
+          <label for="start">Start time
+            <input type="datetime-local" id="start" required />
+          </label>
+          <label for="end">End time
+            <input type="datetime-local" id="end" required />
+          </label>
+        </div>
 
-<label>Event Title
-<input id="title" required>
-</label>
+        <div class="grid-2">
+          <label for="timezone">Time zone
+            <select id="timezone"></select>
+          </label>
+          <label for="recurring">Repeat
+            <select id="recurring">
+              <option value="">No repeat</option>
+              <option value="FREQ=DAILY">Daily</option>
+              <option value="FREQ=WEEKLY">Weekly</option>
+              <option value="FREQ=MONTHLY">Monthly</option>
+            </select>
+          </label>
+        </div>
 
-<label>Start
-<input type="datetime-local" id="start" required>
-</label>
+        <label for="location">Location
+          <input id="location" maxlength="150" placeholder="Conference Room A / Virtual" />
+        </label>
 
-<label>End
-<input type="datetime-local" id="end" required>
-</label>
+        <label for="description">Description
+          <textarea id="description" maxlength="1500" placeholder="Agenda, joining link, notes..."></textarea>
+        </label>
 
-<label>Time Zone
-<select id="timezone">
-<option value="UTC">UTC</option>
-<option value="America/New_York">Eastern</option>
-<option value="America/Chicago">Central</option>
-<option value="America/Denver">Mountain</option>
-<option value="America/Los_Angeles">Pacific</option>
-</select>
-</label>
+        <label for="reminder">Reminder (minutes before)
+          <input type="number" id="reminder" value="15" min="0" max="40320" />
+        </label>
 
-<label>Recurring
-<select id="recurring">
-<option value="">None</option>
-<option value="FREQ=DAILY">Daily</option>
-<option value="FREQ=WEEKLY">Weekly</option>
-<option value="FREQ=MONTHLY">Monthly</option>
-</select>
-</label>
+        <div class="actions">
+          <button class="btn-primary" type="submit">📥 Download ICS</button>
+          <button class="btn-accent" type="button" id="googleBtn">📅 Open Google</button>
+          <button type="button" id="qrBtn">🔳 Generate QR</button>
+          <button type="button" id="qrDownloadBtn">⬇️ Save QR</button>
+          <button type="button" id="shareBtn">📤 Share Event</button>
+          <button type="reset" id="resetBtn">🧹 Clear Form</button>
+        </div>
 
-<label>Location
-<input id="location">
-</label>
+        <p id="status" aria-live="polite"></p>
+      </form>
+    </section>
 
-<label>Description
-<textarea id="description"></textarea>
-</label>
+    <aside class="panel" aria-label="Live event preview">
+      <h2 class="preview-head">Preview</h2>
+      <article class="card">
+        <h3 class="preview-title" id="previewTitle">Your event title</h3>
+        <div class="meta">
+          <div id="previewTime">Choose start and end time</div>
+          <div id="previewZone">Timezone: —</div>
+          <div id="previewLocation">Location: —</div>
+          <div id="previewDesc">Description: —</div>
+        </div>
+      </article>
+      <span class="chip">QR includes title + time + location + description.</span>
+      <div id="qrcode"></div>
+    </aside>
+  </main>
 
-<label>Reminder (minutes before)
-<input type="number" id="reminder" value="15" min="0">
-</label>
+  <footer>Built for fast planning, secure sharing, and mobile usability.</footer>
 
-<div class="buttons">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    const form = document.getElementById("eventForm");
+    const statusEl = document.getElementById("status");
+    const timezone = document.getElementById("timezone");
+    const start = document.getElementById("start");
+    const end = document.getElementById("end");
+    const title = document.getElementById("title");
+    const locationInput = document.getElementById("location");
+    const description = document.getElementById("description");
+    const reminder = document.getElementById("reminder");
+    const recurring = document.getElementById("recurring");
+    let endAutofilled = false;
 
-  <button class="full" type="submit">
-    📥 Download (.ICS)
-  </button>
+    const safeText = (value) => String(value || "")
+      .replace(/\\/g, "\\\\")
+      .replace(/\n/g, "\\n")
+      .replace(/,/g, "\\,")
+      .replace(/;/g, "\\;");
 
-  <button type="button" onclick="openGoogle()">
-    📅 Google
-  </button>
+    const toICSDate = (date) => date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 
-  <button type="button" onclick="generateQR()">
-    🔳 Generate QR
-  </button>
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", isError);
+    }
 
-  <button type="button" onclick="downloadQR()">
-    ⬇️ Download QR
-  </button>
+    function populateTimezones() {
+      const supported = Intl.supportedValuesOf ? Intl.supportedValuesOf("timeZone") : ["UTC"];
+      const preferred = ["UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/London", "Asia/Singapore"];
+      const ordered = [...new Set([...preferred.filter((t) => supported.includes(t)), ...supported])];
+      timezone.innerHTML = ordered.map((zone) => `<option value="${zone}">${zone}</option>`).join("");
+      const userZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (ordered.includes(userZone)) timezone.value = userZone;
+    }
 
-  <button type="button" onclick="shareEvent()">
-    📤 Share
-  </button>
+    function plusOneHour(dateStr) {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return "";
+      d.setHours(d.getHours() + 1);
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
 
-</div>
+    function getEventData() {
+      const event = {
+        title: title.value.trim(),
+        startLocal: start.value,
+        endLocal: end.value,
+        timezone: timezone.value,
+        location: locationInput.value.trim(),
+        description: description.value.trim(),
+        recurring: recurring.value,
+        reminder: Math.max(0, Math.min(40320, Number(reminder.value) || 0))
+      };
+      const startDate = new Date(event.startLocal);
+      const endDate = new Date(event.endLocal);
+      if (!event.title || Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+        throw new Error("Please provide title, start, and end time.");
+      }
+      if (endDate <= startDate) {
+        throw new Error("End time must be after start time.");
+      }
+      event.startDate = startDate;
+      event.endDate = endDate;
+      return event;
+    }
 
-</form>
+    function buildICS(e) {
+      return [
+        "BEGIN:VCALENDAR",
+        "PRODID:-//EventPulse//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "BEGIN:VEVENT",
+        `UID:${crypto.randomUUID()}@eventpulse.local`,
+        `DTSTAMP:${toICSDate(new Date())}`,
+        `DTSTART:${toICSDate(e.startDate)}`,
+        `DTEND:${toICSDate(e.endDate)}`,
+        `SUMMARY:${safeText(e.title)}`,
+        `DESCRIPTION:${safeText(e.description)}`,
+        `LOCATION:${safeText(e.location)}`,
+        e.recurring ? `RRULE:${e.recurring}` : "",
+        "BEGIN:VALARM",
+        `TRIGGER:-PT${e.reminder}M`,
+        "ACTION:DISPLAY",
+        "DESCRIPTION:Reminder",
+        "END:VALARM",
+        "END:VEVENT",
+        "END:VCALENDAR"
+      ].filter(Boolean).join("\r\n");
+    }
 
-<div id="qrcode"></div>
+    function buildGoogleURL(e) {
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE`
+        + `&text=${encodeURIComponent(e.title)}`
+        + `&dates=${toICSDate(e.startDate)}/${toICSDate(e.endDate)}`
+        + `&details=${encodeURIComponent(e.description)}`
+        + `&location=${encodeURIComponent(e.location)}`
+        + `&ctz=${encodeURIComponent(e.timezone)}`;
+    }
 
-<footer>
-  Free static calendar generator
-</footer>
+    function refreshPreview() {
+      document.getElementById("previewTitle").textContent = title.value.trim() || "Your event title";
+      document.getElementById("previewZone").textContent = `Timezone: ${timezone.value || "—"}`;
+      document.getElementById("previewLocation").textContent = `Location: ${locationInput.value.trim() || "—"}`;
+      document.getElementById("previewDesc").textContent = `Description: ${description.value.trim() || "—"}`;
 
-<!-- QR Library (offline capable after first load) -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+      if (start.value && end.value) {
+        const format = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+        const startTxt = format.format(new Date(start.value));
+        const endTxt = format.format(new Date(end.value));
+        document.getElementById("previewTime").textContent = `${startTxt} → ${endTxt}`;
+      } else {
+        document.getElementById("previewTime").textContent = "Choose start and end time";
+      }
+    }
 
-<script>
+    function downloadICS() {
+      const e = getEventData();
+      const blob = new Blob([buildICS(e)], { type: "text/calendar;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${(e.title || "event").replace(/[^a-z0-9_-]+/gi, "_")}.ics`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      setStatus("ICS file downloaded.");
+    }
 
-function formatLocal(dateStr) {
-  return dateStr.replace(/[-:]/g, "").replace(".000", "");
-}
+    async function generateQR() {
+      const e = getEventData();
+      const container = document.getElementById("qrcode");
+      container.innerHTML = "<canvas id='qrCanvas' aria-label='Event QR code'></canvas>";
+      await QRCode.toCanvas(document.getElementById("qrCanvas"), buildGoogleURL(e), {
+        width: 240,
+        margin: 1,
+        color: { dark: "#0b1020", light: "#ffffff" }
+      });
+      setStatus("QR generated with event details and description.");
+    }
 
-function getEventData() {
-  return {
-    title: title.value,
-    start: formatLocal(start.value),
-    end: formatLocal(end.value),
-    location: location.value,
-    description: description.value,
-    reminder: reminder.value,
-    recurring: recurring.value,
-    timezone: timezone.value
-  };
-}
+    function downloadQR() {
+      const canvas = document.getElementById("qrCanvas");
+      if (!canvas) {
+        setStatus("Generate a QR code first.", true);
+        return;
+      }
+      const link = document.createElement("a");
+      link.download = "eventpulse-qr.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      setStatus("QR image downloaded.");
+    }
 
-function buildICS(e) {
-  return `BEGIN:VCALENDAR
-VERSION:2.0
-CALSCALE:GREGORIAN
-BEGIN:VEVENT
-UID:${Date.now()}@calendar
-DTSTAMP:${formatLocal(new Date().toISOString())}
-DTSTART;TZID=${e.timezone}:${e.start}
-DTEND;TZID=${e.timezone}:${e.end}
-SUMMARY:${e.title}
-DESCRIPTION:${e.description}
-LOCATION:${e.location}
-${e.recurring ? "RRULE:" + e.recurring : ""}
-BEGIN:VALARM
-TRIGGER:-PT${e.reminder}M
-ACTION:DISPLAY
-DESCRIPTION:Reminder
-END:VALARM
-END:VEVENT
-END:VCALENDAR`;
-}
+    async function shareEvent() {
+      const e = getEventData();
+      const url = buildGoogleURL(e);
+      if (navigator.share) {
+        await navigator.share({
+          title: e.title,
+          text: `Add this event: ${e.title}`,
+          url
+        });
+        setStatus("Event shared.");
+        return;
+      }
 
-function downloadICS() {
-  const e = getEventData();
-  const blob = new Blob([buildICS(e)], { type: "text/calendar" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${e.title.replace(/\s+/g,"_")}.ics`;
-  a.click();
-}
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+        setStatus("Share link copied to clipboard.");
+        return;
+      }
 
-function openGoogle() {
-  const startUTC = new Date(start.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
-  const endUTC = new Date(end.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+      setStatus("Sharing unsupported. Copy this URL manually: " + url, true);
+    }
 
-  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-  `&text=${encodeURIComponent(title.value)}` +
-  `&dates=${startUTC}/${endUTC}` +
-  `&details=${encodeURIComponent(description.value)}` +
-  `&location=${encodeURIComponent(location.value)}`;
+    function syncEndWithStart() {
+      const computed = plusOneHour(start.value);
+      if (!end.value || endAutofilled) {
+        end.value = computed;
+        endAutofilled = true;
+      }
+      refreshPreview();
+    }
 
-  window.open(url,"_blank");
-}
+    start.addEventListener("change", syncEndWithStart);
+    start.addEventListener("input", syncEndWithStart);
 
-function generateQR() {
-  const startUTC = new Date(start.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
-  const endUTC = new Date(end.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
-
-  const googleURL = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-  `&text=${encodeURIComponent(title.value)}` +
-  `&dates=${startUTC}/${endUTC}`;
-
-  document.getElementById("qrcode").innerHTML = "<canvas id='qr'></canvas>";
-  QRCode.toCanvas(document.getElementById("qr"), googleURL, { width: 220 });
-}
-
-function downloadQR() {
-  const canvas = document.getElementById("qr");
-  if (!canvas) return alert("Generate QR first.");
-  const link = document.createElement("a");
-  link.download = "event-qr.png";
-  link.href = canvas.toDataURL();
-  link.click();
-}
-
-async function shareEvent() {
-  const startUTC = new Date(start.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
-  const endUTC = new Date(end.value).toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
-
-  const shareURL = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-  `&text=${encodeURIComponent(title.value)}` +
-  `&dates=${startUTC}/${endUTC}`;
-
-  if (navigator.share) {
-    await navigator.share({
-      title: title.value,
-      text: "Add this event:",
-      url: shareURL
+    end.addEventListener("input", () => {
+      endAutofilled = false;
+      refreshPreview();
     });
-  } else {
-    alert("Sharing not supported on this device.");
-  }
-}
 
-document.getElementById("eventForm").addEventListener("submit", function(e){
-  e.preventDefault();
-  downloadICS();
-});
+    [title, locationInput, description, reminder, recurring, timezone].forEach((el) => {
+      el.addEventListener("input", refreshPreview);
+      el.addEventListener("change", refreshPreview);
+    });
 
-</script>
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      try {
+        downloadICS();
+      } catch (error) {
+        setStatus(error.message || "Unable to generate file.", true);
+      }
+    });
 
+    document.getElementById("googleBtn").addEventListener("click", () => {
+      try {
+        window.open(buildGoogleURL(getEventData()), "_blank", "noopener,noreferrer");
+      } catch (error) {
+        setStatus(error.message || "Unable to open Google Calendar.", true);
+      }
+    });
+
+    document.getElementById("qrBtn").addEventListener("click", async () => {
+      try {
+        await generateQR();
+      } catch (error) {
+        setStatus(error.message || "Unable to generate QR.", true);
+      }
+    });
+
+    document.getElementById("qrDownloadBtn").addEventListener("click", downloadQR);
+
+    document.getElementById("shareBtn").addEventListener("click", async () => {
+      try {
+        await shareEvent();
+      } catch (error) {
+        setStatus(error.message || "Unable to share event.", true);
+      }
+    });
+
+    form.addEventListener("reset", () => {
+      setTimeout(() => {
+        endAutofilled = false;
+        setStatus("Form cleared.");
+        refreshPreview();
+      }, 0);
+    });
+
+    populateTimezones();
+    refreshPreview();
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    }
+  </script>
 </body>
 </html>
