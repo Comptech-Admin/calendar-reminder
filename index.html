@@ -195,10 +195,12 @@
     }
 
     #qrcode canvas {
+      width: min(360px, 100%);
+      height: auto;
       max-width: 100%;
       background: #fff;
       border-radius: 14px;
-      border: 10px solid #fff;
+      border: 12px solid #fff;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
     }
 
@@ -412,12 +414,21 @@
       ].filter(Boolean).join("\r\n");
     }
 
-    function buildGoogleURL(e) {
+    function compactText(value, max = 220) {
+      return String(value || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, max);
+    }
+
+    function buildGoogleURL(e, { forQR = false } = {}) {
+      const details = forQR ? compactText(e.description, 220) : e.description;
+      const location = forQR ? compactText(e.location, 90) : e.location;
       return `https://calendar.google.com/calendar/render?action=TEMPLATE`
         + `&text=${encodeURIComponent(e.title)}`
         + `&dates=${toICSDate(e.startDate)}/${toICSDate(e.endDate)}`
-        + `&details=${encodeURIComponent(e.description)}`
-        + `&location=${encodeURIComponent(e.location)}`
+        + `&details=${encodeURIComponent(details)}`
+        + `&location=${encodeURIComponent(location)}`
         + `&ctz=${encodeURIComponent(e.timezone)}`;
     }
 
@@ -452,12 +463,17 @@
       const e = getEventData();
       const container = document.getElementById("qrcode");
       container.innerHTML = "<canvas id='qrCanvas' aria-label='Event QR code'></canvas>";
-      await QRCode.toCanvas(document.getElementById("qrCanvas"), buildGoogleURL(e), {
-        width: 240,
-        margin: 1,
-        color: { dark: "#0b1020", light: "#ffffff" }
+      const qrURL = buildGoogleURL(e, { forQR: true });
+      await QRCode.toCanvas(document.getElementById("qrCanvas"), qrURL, {
+        width: 360,
+        margin: 4,
+        errorCorrectionLevel: "M",
+        color: { dark: "#000000", light: "#ffffff" }
       });
-      setStatus("QR generated with event details and description.");
+      const truncated = e.description.trim().length > 220 || e.location.trim().length > 90;
+      setStatus(truncated
+        ? "QR generated in high-compatibility mode (long text compacted for easier mobile scanning)."
+        : "QR generated with event details and description.");
     }
 
     function downloadQR() {
