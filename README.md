@@ -46,6 +46,10 @@ Open:
 http://localhost:4173
 ```
 
+## Support
+
+- Issues / requests: https://github.com/Comptech-Admin/calendar-reminder/issues
+
 ## Documentation
 
 Detailed implementation, security/SEO notes, and project planning were moved out of this showcase README:
